@@ -125,10 +125,29 @@
       color: #082515;
     }
 
-    .boton-objetivo {
-      background: var(--azul);
-      color: #071d38;
-    }
+    .contador-total-boton {
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid rgba(121, 185, 255, 0.35);
+  border-radius: 14px;
+  background: rgba(121, 185, 255, 0.14);
+  color: var(--texto);
+  text-align: center;
+}
+
+.contador-total-boton span,
+.contador-total-boton small {
+  display: block;
+  color: var(--apagado);
+  font-size: 0.78rem;
+}
+
+.contador-total-boton strong {
+  display: block;
+  margin: 1px 0;
+  color: var(--azul);
+  font-size: 1.7rem;
+}
 
     .estado {
       min-height: 23px;
@@ -236,9 +255,11 @@
           💪 He hecho deporte
         </button>
 
-        <button class="boton-objetivo" type="button" onclick="registrar('He cumplido mi objetivo')">
-          ✨ Objetivo cumplido
-        </button>
+        <div class="contador-total-boton">
+          <span>Total acumulado</span>
+          <strong id="contadorFumarTotal">0</strong>
+          <small>cigarros registrados</small>
+        </div>
       </div>
 
       <p id="estado" class="estado"></p>
@@ -275,6 +296,7 @@
     const estado = document.getElementById('estado');
     const listaRegistros = document.getElementById('listaRegistros');
     const contadorFumar = document.getElementById('contadorFumar');
+    const contadorFumarTotal = document.getElementById('contadorFumarTotal');
 
     inputUsuario.value = localStorage.getItem('amorsitos_usuario') || '';
 
@@ -413,6 +435,11 @@
       ).reduce((total, registro) => total + (registro.cantidad || 1), 0);
 
       contadorFumar.textContent = cigarrosHoy;
+      const cigarrosTotal = registros
+        .filter(registro => registro.actividad === 'He fumado un cigarro')
+        .reduce((total, registro) => total + (registro.cantidad || 1), 0);
+
+      contadorFumarTotal.textContent = cigarrosTotal;
     }
 
     function escaparHTML(texto) {
