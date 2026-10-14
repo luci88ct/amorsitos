@@ -270,14 +270,29 @@
     </section>
 
     <section class="tarjeta">
-      <h2>Cigarros de hoy</h2>
+  <h2>Cigarros de hoy</h2>
 
-      <p class="contador">
-        <strong id="contadorFumar">—</strong>
-        <span>registrados hoy</span>
-      </p>
-    </section>
+  <p class="contador">
+    <strong id="contadorFumar">—</strong>
+    <span>/ 10 cigarros</span>
+  </p>
 
+  <progress
+    id="progresoFumar"
+    max="10"
+    value="0"
+    aria-label="Cigarros registrados respecto al límite diario de 10"
+  ></progress>
+
+  <p
+    id="avisoLimite"
+    class="aviso-limite"
+    role="status"
+    aria-live="polite"
+  >
+    Cargando contador…
+  </p>
+</section>
     <section class="tarjeta">
       <h2>Últimos registros</h2>
 
