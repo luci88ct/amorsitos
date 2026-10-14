@@ -17,6 +17,7 @@
       --rosa: #f08cab;
       --azul: #79b9ff;
       --rojo: #ef6e7b;
+      --amarillo: #f5c76b;
       --borde: rgba(255, 255, 255, 0.12);
     }
 
@@ -184,6 +185,64 @@
       color: var(--apagado);
     }
 
+    #progresoFumar {
+      display: block;
+      width: 100%;
+      height: 16px;
+      margin: 14px 0 0;
+      overflow: hidden;
+      border: 0;
+      border-radius: 999px;
+      background: #15101c;
+      accent-color: var(--rosa);
+    }
+
+    #progresoFumar::-webkit-progress-bar {
+      background: #15101c;
+      border-radius: 999px;
+    }
+
+    #progresoFumar::-webkit-progress-value {
+      background: var(--color-progreso, var(--rosa));
+      border-radius: 999px;
+    }
+
+    #progresoFumar::-moz-progress-bar {
+      background: var(--color-progreso, var(--rosa));
+      border-radius: 999px;
+    }
+
+    .aviso-limite {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--apagado);
+      line-height: 1.5;
+    }
+
+    .aviso-limite[data-nivel="precaucion"] {
+      border-color: var(--amarillo);
+      background: rgba(245, 199, 107, 0.12);
+      color: #ffe0a0;
+      font-weight: 750;
+    }
+
+    .aviso-limite[data-nivel="limite"] {
+      border-color: var(--rojo);
+      background: rgba(239, 110, 123, 0.14);
+      color: #ffabb3;
+      font-weight: 800;
+    }
+
+    .aviso-limite[data-nivel="superado"] {
+      border: 2px solid var(--rojo);
+      background: rgba(239, 110, 123, 0.22);
+      color: #ffd1d6;
+      font-weight: 800;
+    }
+
     .lista {
       display: grid;
       gap: 10px;
@@ -266,33 +325,40 @@
         </div>
       </div>
 
-      <p id="estado" class="estado" role="status" aria-live="polite"></p>
+      <p
+        id="estado"
+        class="estado"
+        role="status"
+        aria-live="polite"
+      ></p>
     </section>
 
     <section class="tarjeta">
-  <h2>Cigarros de hoy</h2>
+      <h2>Cigarros de hoy · límite compartido</h2>
 
-  <p class="contador">
-    <strong id="contadorFumar">—</strong>
-    <span>/ 10 cigarros</span>
-  </p>
+      <p class="contador">
+        <strong id="contadorFumar">—</strong>
+        <span>/ 10 cigarros</span>
+      </p>
 
-  <progress
-    id="progresoFumar"
-    max="10"
-    value="0"
-    aria-label="Cigarros registrados respecto al límite diario de 10"
-  ></progress>
+      <progress
+        id="progresoFumar"
+        max="10"
+        value="0"
+        aria-label="Cigarros registrados respecto al límite diario de 10"
+      ></progress>
 
-  <p
-    id="avisoLimite"
-    class="aviso-limite"
-    role="status"
-    aria-live="polite"
-  >
-    Cargando contador…
-  </p>
-</section>
+      <p
+        id="avisoLimite"
+        class="aviso-limite"
+        data-nivel="normal"
+        role="status"
+        aria-live="polite"
+      >
+        Cargando contador…
+      </p>
+    </section>
+
     <section class="tarjeta">
       <h2>Últimos registros</h2>
 
@@ -304,16 +370,19 @@
     <p class="nota">
       La fecha y hora se guardan automáticamente en Supabase.
       Los contadores suman los cigarros de ambos.
+      El límite diario se calcula según la fecha de Madrid.
     </p>
   </main>
 
   <script>
-    // Conserva aquí los datos de tu proyecto.
+    // Conserva aquí tus datos de Supabase.
     // Usa la clave pública anon/publishable, nunca service_role.
     const SUPABASE_URL = 'https://zdnodsycijifoltclpxx.supabase.co/';
     const SUPABASE_KEY = 'sb_publishable_Xi2QJVrNMWOdMJlF00oZdA_aV0e7jRF';
 
     const ACTIVIDAD_CIGARRO = 'He fumado un cigarro';
+    const LIMITE_DIARIO = 10;
+    const UMBRAL_AVISO = 7;
 
     const inputUsuario = document.getElementById('usuario');
     const estado = document.getElementById('estado');
@@ -321,11 +390,31 @@
     const contadorFumar = document.getElementById('contadorFumar');
     const contadorFumarTotal = document.getElementById('contadorFumarTotal');
     const botonFumar = document.getElementById('botonFumar');
+    const progresoFumar = document.getElementById('progresoFumar');
+    const avisoLimite = document.getElementById('avisoLimite');
 
     let db = null;
     let guardando = false;
     let cargando = false;
     let temporizadorEstado;
+
+    const formateadorFechaHora = new Intl.DateTimeFormat('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'Europe/Madrid'
+    });
+
+    const formateadorDia = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Madrid',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
 
     try {
       inputUsuario.value =
@@ -416,7 +505,6 @@
 
         mostrarEstado('✓ Cigarro registrado correctamente.');
 
-        // Espera si había una lectura anterior en curso.
         while (cargando) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -424,8 +512,10 @@
         await cargarRegistros();
       } catch (error) {
         console.error(error);
+
         mostrarEstado(
-          'No se pudo guardar: ' + (error.message || 'Error desconocido'),
+          'No se pudo guardar: ' +
+          (error.message || 'Error desconocido'),
           true
         );
       } finally {
@@ -435,25 +525,11 @@
     }
 
     function formatoFechaHora(fecha) {
-      return new Intl.DateTimeFormat('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-        timeZone: 'Europe/Madrid'
-      }).format(new Date(fecha));
+      return formateadorFechaHora.format(new Date(fecha));
     }
 
     function fechaMadrid(fecha) {
-      const partes = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Madrid',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).formatToParts(new Date(fecha));
+      const partes = formateadorDia.formatToParts(new Date(fecha));
 
       const valores = Object.fromEntries(
         partes
@@ -469,14 +545,78 @@
       return Number.isFinite(cantidad) ? cantidad : 1;
     }
 
+    function actualizarLimite(cigarrosHoy) {
+      let nivel = 'normal';
+      let color = '#f08cab';
+      let mensaje = '';
+
+      if (cigarrosHoy > LIMITE_DIARIO) {
+        const exceso = cigarrosHoy - LIMITE_DIARIO;
+
+        nivel = 'superado';
+        color = '#ef6e7b';
+
+        mensaje =
+          `🚨 Habéis sobrepasado el límite diario: ` +
+          `${cigarrosHoy}/${LIMITE_DIARIO}. ` +
+          `Lleváis ${exceso} ` +
+          `${exceso === 1 ? 'cigarro' : 'cigarros'} de más.`;
+      } else if (cigarrosHoy === LIMITE_DIARIO) {
+        nivel = 'limite';
+        color = '#ef6e7b';
+
+        mensaje =
+          `🛑 Habéis alcanzado el límite diario: ` +
+          `${cigarrosHoy}/${LIMITE_DIARIO}.`;
+      } else if (cigarrosHoy >= UMBRAL_AVISO) {
+        const restantes = LIMITE_DIARIO - cigarrosHoy;
+
+        nivel = 'precaucion';
+        color = '#f5c76b';
+
+        mensaje =
+          `⚠️ Ojo, lleváis ${cigarrosHoy}/${LIMITE_DIARIO}. ` +
+          (
+            restantes === 1
+              ? 'Solo queda 1 cigarro '
+              : `Solo quedan ${restantes} cigarros `
+          ) +
+          'para alcanzar el límite diario.';
+      } else {
+        const restantes = LIMITE_DIARIO - cigarrosHoy;
+
+        mensaje =
+          `Lleváis ${cigarrosHoy}/${LIMITE_DIARIO}. ` +
+          `Quedan ${restantes} cigarros para alcanzar el límite diario.`;
+      }
+
+      contadorFumar.textContent = cigarrosHoy;
+      contadorFumar.style.color = color;
+
+      avisoLimite.dataset.nivel = nivel;
+      avisoLimite.textContent = mensaje;
+
+      progresoFumar.max = LIMITE_DIARIO;
+      progresoFumar.value = Math.max(
+        0,
+        Math.min(cigarrosHoy, LIMITE_DIARIO)
+      );
+
+      progresoFumar.style.accentColor = color;
+      progresoFumar.style.setProperty('--color-progreso', color);
+
+      progresoFumar.setAttribute(
+        'aria-valuetext',
+        `${cigarrosHoy} de ${LIMITE_DIARIO} cigarros registrados hoy`
+      );
+    }
+
     async function cargarRegistros() {
       if (!db || cargando) return;
 
       cargando = true;
 
       try {
-        // Lee por páginas para no calcular los totales
-        // únicamente sobre los últimos 30 registros.
         const registros = [];
         const tamanoPagina = 500;
         let desde = 0;
@@ -495,6 +635,7 @@
           registros.push(...pagina);
 
           if (pagina.length < tamanoPagina) break;
+
           desde += tamanoPagina;
         }
 
@@ -508,9 +649,10 @@
             .map(registro => `
               <article class="registro">
                 <div class="registro-principal">
-                  ${escaparHTML(registro.usuario)} — 
+                  ${escaparHTML(registro.usuario)} —
                   ${escaparHTML(registro.actividad)}
                 </div>
+
                 <div class="registro-hora">
                   ${formatoFechaHora(registro.fecha_hora)}
                 </div>
@@ -535,13 +677,17 @@
           0
         );
 
-        contadorFumar.textContent = cigarrosHoy;
+        actualizarLimite(cigarrosHoy);
         contadorFumarTotal.textContent = cigarrosTotal;
       } catch (error) {
         console.error(error);
 
         listaRegistros.innerHTML =
           '<p class="vacio">No se pudieron actualizar los registros.</p>';
+
+        avisoLimite.dataset.nivel = 'normal';
+        avisoLimite.textContent =
+          'No se pudo actualizar el límite. Los valores visibles pueden estar desactualizados.';
 
         mostrarEstado(
           'No se pudieron actualizar los datos: ' +
@@ -562,22 +708,30 @@
     function iniciar() {
       if (!SUPABASE_URL || !SUPABASE_KEY) {
         botonFumar.disabled = true;
+
         listaRegistros.innerHTML =
           '<p class="vacio">Falta configurar la conexión con Supabase.</p>';
+
+        avisoLimite.textContent =
+          'Configura Supabase para cargar el contador.';
 
         mostrarEstado(
           'Completa SUPABASE_URL y SUPABASE_KEY en el archivo.',
           true
         );
+
         return;
       }
 
       if (!window.supabase) {
         botonFumar.disabled = true;
+        avisoLimite.textContent = 'No se pudo cargar la conexión.';
+
         mostrarEstado(
           'No se pudo cargar Supabase. Revisa la conexión y recarga.',
           true
         );
+
         return;
       }
 
@@ -588,18 +742,29 @@
         );
       } catch (error) {
         botonFumar.disabled = true;
+        avisoLimite.textContent = 'Revisa la configuración de Supabase.';
+
         mostrarEstado(
           'Revisa la configuración de Supabase: ' + error.message,
           true
         );
+
         return;
       }
 
       cargarRegistros();
 
       setInterval(() => {
-        if (!guardando) cargarRegistros();
+        if (!guardando) {
+          cargarRegistros();
+        }
       }, 15000);
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !guardando) {
+          cargarRegistros();
+        }
+      });
     }
 
     iniciar();
