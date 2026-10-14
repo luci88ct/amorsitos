@@ -15,9 +15,7 @@
       --texto: #fff8ff;
       --apagado: #cfc2d5;
       --rosa: #f08cab;
-      --rosa-oscuro: #c95f82;
       --azul: #79b9ff;
-      --verde: #65c990;
       --rojo: #ef6e7b;
       --borde: rgba(255, 255, 255, 0.12);
     }
@@ -29,10 +27,20 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family:
+        system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(240, 140, 171, 0.18), transparent 35%),
-        radial-gradient(circle at right bottom, rgba(121, 185, 255, 0.12), transparent 30%),
+        radial-gradient(
+          circle at top left,
+          rgba(240, 140, 171, 0.18),
+          transparent 35%
+        ),
+        radial-gradient(
+          circle at right bottom,
+          rgba(121, 185, 255, 0.12),
+          transparent 30%
+        ),
         var(--fondo);
       color: var(--texto);
     }
@@ -77,6 +85,7 @@
 
     input {
       width: 100%;
+      min-width: 0;
       padding: 14px;
       border: 1px solid var(--borde);
       border-radius: 12px;
@@ -107,6 +116,11 @@
       filter: brightness(1.08);
     }
 
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
     .botones {
       display: grid;
       grid-template-columns: 1fr;
@@ -120,34 +134,28 @@
       font-size: 1.25rem;
     }
 
-    .boton-deporte {
-      background: var(--verde);
-      color: #082515;
+    .contador-total-boton {
+      padding: 12px;
+      border: 1px solid rgba(121, 185, 255, 0.35);
+      border-radius: 14px;
+      background: rgba(121, 185, 255, 0.14);
+      color: var(--texto);
+      text-align: center;
     }
 
-    .contador-total-boton {
-  min-height: 52px;
-  padding: 10px 12px;
-  border: 1px solid rgba(121, 185, 255, 0.35);
-  border-radius: 14px;
-  background: rgba(121, 185, 255, 0.14);
-  color: var(--texto);
-  text-align: center;
-}
+    .contador-total-boton span,
+    .contador-total-boton small {
+      display: block;
+      color: var(--apagado);
+      font-size: 0.78rem;
+    }
 
-.contador-total-boton span,
-.contador-total-boton small {
-  display: block;
-  color: var(--apagado);
-  font-size: 0.78rem;
-}
-
-.contador-total-boton strong {
-  display: block;
-  margin: 1px 0;
-  color: var(--azul);
-  font-size: 1.7rem;
-}
+    .contador-total-boton strong {
+      display: block;
+      margin: 1px 0;
+      color: var(--azul);
+      font-size: 1.7rem;
+    }
 
     .estado {
       min-height: 23px;
@@ -164,7 +172,7 @@
       display: flex;
       align-items: baseline;
       gap: 8px;
-      margin: 0 0 14px;
+      margin: 0;
     }
 
     .contador strong {
@@ -190,6 +198,7 @@
 
     .registro-principal {
       font-weight: 750;
+      overflow-wrap: anywhere;
     }
 
     .registro-hora {
@@ -210,26 +219,16 @@
       font-size: 0.85rem;
       text-align: center;
     }
-
-    @media (min-width: 560px) {
-      .botones {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .boton-fumar {
-        grid-column: span 3;
-      }
-    }
   </style>
 </head>
 
 <body>
   <main>
     <h1>Amorsitos 🐷🐰</h1>
-    <p class="subtitulo">Registro compartido de objetivos</p>
+    <p class="subtitulo">Registro compartido de cigarros</p>
 
     <section class="tarjeta">
-      <h2>¿Quién registra la actividad?</h2>
+      <h2>¿Quién registra el cigarro?</h2>
 
       <div class="nombre-fila">
         <input
@@ -238,8 +237,12 @@
           maxlength="40"
           placeholder="Tu nombre"
           autocomplete="name"
+          aria-label="Tu nombre"
         >
-        <button type="button" onclick="guardarNombre()">Guardar</button>
+
+        <button type="button" onclick="guardarNombre()">
+          Guardar
+        </button>
       </div>
     </section>
 
@@ -247,34 +250,37 @@
       <h2>Registrar ahora</h2>
 
       <div class="botones">
-        <button class="boton-fumar" type="button" onclick="registrar('He fumado un cigarro')">
+        <button
+          id="botonFumar"
+          class="boton-fumar"
+          type="button"
+          onclick="registrarCigarro()"
+        >
           🚬 He fumado un cigarro
-        </button>
-
-        <button class="boton-deporte" type="button" onclick="registrar('He hecho deporte')">
-          💪 He hecho deporte
         </button>
 
         <div class="contador-total-boton">
           <span>Total acumulado</span>
-          <strong id="contadorFumarTotal">0</strong>
+          <strong id="contadorFumarTotal">—</strong>
           <small>cigarros registrados</small>
         </div>
       </div>
 
-      <p id="estado" class="estado"></p>
+      <p id="estado" class="estado" role="status" aria-live="polite"></p>
     </section>
 
     <section class="tarjeta">
       <h2>Cigarros de hoy</h2>
+
       <p class="contador">
-        <strong id="contadorFumar">0</strong>
+        <strong id="contadorFumar">—</strong>
         <span>registrados hoy</span>
       </p>
     </section>
 
     <section class="tarjeta">
       <h2>Últimos registros</h2>
+
       <div id="listaRegistros" class="lista">
         <p class="vacio">Cargando registros…</p>
       </div>
@@ -282,23 +288,45 @@
 
     <p class="nota">
       La fecha y hora se guardan automáticamente en Supabase.
+      Los contadores suman los cigarros de ambos.
     </p>
   </main>
 
   <script>
-    // PEGA AQUÍ los dos datos que has guardado de Supabase.
+    // Conserva aquí los datos de tu proyecto.
+    // Usa la clave pública anon/publishable, nunca service_role.
     const SUPABASE_URL = 'https://zdnodsycijifoltclpxx.supabase.co/';
     const SUPABASE_KEY = 'sb_publishable_Xi2QJVrNMWOdMJlF00oZdA_aV0e7jRF';
 
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const ACTIVIDAD_CIGARRO = 'He fumado un cigarro';
 
     const inputUsuario = document.getElementById('usuario');
     const estado = document.getElementById('estado');
     const listaRegistros = document.getElementById('listaRegistros');
     const contadorFumar = document.getElementById('contadorFumar');
     const contadorFumarTotal = document.getElementById('contadorFumarTotal');
+    const botonFumar = document.getElementById('botonFumar');
 
-    inputUsuario.value = localStorage.getItem('amorsitos_usuario') || '';
+    let db = null;
+    let guardando = false;
+    let cargando = false;
+    let temporizadorEstado;
+
+    try {
+      inputUsuario.value =
+        localStorage.getItem('amorsitos_usuario') || '';
+    } catch {
+      inputUsuario.value = '';
+    }
+
+    function guardarNombreLocal(nombre) {
+      try {
+        localStorage.setItem('amorsitos_usuario', nombre);
+        return true;
+      } catch {
+        return false;
+      }
+    }
 
     function guardarNombre() {
       const nombre = inputUsuario.value.trim();
@@ -309,61 +337,86 @@
         return;
       }
 
-      localStorage.setItem('amorsitos_usuario', nombre);
-      mostrarEstado('Nombre guardado en este dispositivo.');
+      if (guardarNombreLocal(nombre)) {
+        mostrarEstado('Nombre guardado en este dispositivo.');
+      } else {
+        mostrarEstado(
+          'Puedes registrar, pero el navegador no permite guardar el nombre.',
+          true
+        );
+      }
     }
 
     function obtenerUsuario() {
       const nombre = inputUsuario.value.trim();
 
       if (!nombre) {
-        mostrarEstado('Escribe y guarda tu nombre antes de registrar una actividad.', true);
+        mostrarEstado(
+          'Escribe tu nombre antes de registrar un cigarro.',
+          true
+        );
         inputUsuario.focus();
         return null;
       }
 
-      localStorage.setItem('amorsitos_usuario', nombre);
+      guardarNombreLocal(nombre);
       return nombre;
     }
 
     function mostrarEstado(mensaje, esError = false) {
+      clearTimeout(temporizadorEstado);
+
       estado.textContent = mensaje;
       estado.classList.toggle('error', esError);
 
-      if (mensaje) {
-        setTimeout(() => {
-          if (estado.textContent === mensaje) {
-            estado.textContent = '';
-            estado.classList.remove('error');
-          }
+      if (mensaje && !esError) {
+        temporizadorEstado = setTimeout(() => {
+          estado.textContent = '';
+          estado.classList.remove('error');
         }, 4000);
       }
     }
 
-    async function registrar(actividad) {
-      const usuario = obtenerUsuario();
+    async function registrarCigarro() {
+      if (!db || guardando) return;
 
+      const usuario = obtenerUsuario();
       if (!usuario) return;
 
+      guardando = true;
+      botonFumar.disabled = true;
       mostrarEstado('Guardando…');
 
-      const { error } = await db
-        .from('registros')
-        .insert({
-          usuario: usuario,
-          actividad: actividad,
-          cantidad: 1,
-          nota: null
-        });
+      try {
+        const { error } = await db
+          .from('registros')
+          .insert({
+            usuario: usuario,
+            actividad: ACTIVIDAD_CIGARRO,
+            cantidad: 1,
+            nota: null
+          });
 
-      if (error) {
+        if (error) throw error;
+
+        mostrarEstado('✓ Cigarro registrado correctamente.');
+
+        // Espera si había una lectura anterior en curso.
+        while (cargando) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+        await cargarRegistros();
+      } catch (error) {
         console.error(error);
-        mostrarEstado('No se pudo guardar: ' + error.message, true);
-        return;
+        mostrarEstado(
+          'No se pudo guardar: ' + (error.message || 'Error desconocido'),
+          true
+        );
+      } finally {
+        guardando = false;
+        botonFumar.disabled = false;
       }
-
-      mostrarEstado('✓ Registrado correctamente.');
-      await cargarRegistros();
     }
 
     function formatoFechaHora(fecha) {
@@ -379,15 +432,13 @@
       }).format(new Date(fecha));
     }
 
-    function inicioDeHoyMadrid() {
-      const ahora = new Date();
-
+    function fechaMadrid(fecha) {
       const partes = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Europe/Madrid',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
-      }).formatToParts(ahora);
+      }).formatToParts(new Date(fecha));
 
       const valores = Object.fromEntries(
         partes
@@ -395,62 +446,148 @@
           .map(parte => [parte.type, parte.value])
       );
 
-      return `${valores.year}-${valores.month}-${valores.day}T00:00:00+02:00`;
+      return `${valores.year}-${valores.month}-${valores.day}`;
+    }
+
+    function cantidadRegistro(registro) {
+      const cantidad = Number(registro.cantidad ?? 1);
+      return Number.isFinite(cantidad) ? cantidad : 1;
     }
 
     async function cargarRegistros() {
-      const { data, error } = await db
-        .from('registros')
-        .select('*')
-        .order('fecha_hora', { ascending: false })
-        .limit(30);
+      if (!db || cargando) return;
 
-      if (error) {
+      cargando = true;
+
+      try {
+        // Lee por páginas para no calcular los totales
+        // únicamente sobre los últimos 30 registros.
+        const registros = [];
+        const tamanoPagina = 500;
+        let desde = 0;
+
+        while (true) {
+          const { data, error } = await db
+            .from('registros')
+            .select('usuario, actividad, cantidad, fecha_hora')
+            .eq('actividad', ACTIVIDAD_CIGARRO)
+            .order('fecha_hora', { ascending: false })
+            .range(desde, desde + tamanoPagina - 1);
+
+          if (error) throw error;
+
+          const pagina = data || [];
+          registros.push(...pagina);
+
+          if (pagina.length < tamanoPagina) break;
+          desde += tamanoPagina;
+        }
+
+        const ultimosRegistros = registros.slice(0, 30);
+
+        if (!ultimosRegistros.length) {
+          listaRegistros.innerHTML =
+            '<p class="vacio">Todavía no hay cigarros registrados.</p>';
+        } else {
+          listaRegistros.innerHTML = ultimosRegistros
+            .map(registro => `
+              <article class="registro">
+                <div class="registro-principal">
+                  ${escaparHTML(registro.usuario)} — 
+                  ${escaparHTML(registro.actividad)}
+                </div>
+                <div class="registro-hora">
+                  ${formatoFechaHora(registro.fecha_hora)}
+                </div>
+              </article>
+            `)
+            .join('');
+        }
+
+        const hoyMadrid = fechaMadrid(new Date());
+
+        const cigarrosHoy = registros
+          .filter(registro =>
+            fechaMadrid(registro.fecha_hora) === hoyMadrid
+          )
+          .reduce(
+            (total, registro) => total + cantidadRegistro(registro),
+            0
+          );
+
+        const cigarrosTotal = registros.reduce(
+          (total, registro) => total + cantidadRegistro(registro),
+          0
+        );
+
+        contadorFumar.textContent = cigarrosHoy;
+        contadorFumarTotal.textContent = cigarrosTotal;
+      } catch (error) {
         console.error(error);
-        listaRegistros.innerHTML = '<p class="vacio">No se pudieron cargar los registros.</p>';
-        return;
+
+        listaRegistros.innerHTML =
+          '<p class="vacio">No se pudieron actualizar los registros.</p>';
+
+        mostrarEstado(
+          'No se pudieron actualizar los datos: ' +
+          (error.message || 'Error desconocido'),
+          true
+        );
+      } finally {
+        cargando = false;
       }
-
-      const registros = data || [];
-
-      if (!registros.length) {
-        listaRegistros.innerHTML = '<p class="vacio">Todavía no hay registros.</p>';
-      } else {
-        listaRegistros.innerHTML = registros.map(registro => `
-          <article class="registro">
-            <div class="registro-principal">
-              ${escaparHTML(registro.usuario)} — ${escaparHTML(registro.actividad)}
-            </div>
-            <div class="registro-hora">
-              ${formatoFechaHora(registro.fecha_hora)}
-            </div>
-          </article>
-        `).join('');
-      }
-
-      const inicioHoy = inicioDeHoyMadrid();
-      const cigarrosHoy = registros.filter(registro =>
-        registro.actividad === 'He fumado un cigarro' &&
-        registro.fecha_hora >= inicioHoy
-      ).reduce((total, registro) => total + (registro.cantidad || 1), 0);
-
-      contadorFumar.textContent = cigarrosHoy;
-      const cigarrosTotal = registros
-        .filter(registro => registro.actividad === 'He fumado un cigarro')
-        .reduce((total, registro) => total + (registro.cantidad || 1), 0);
-
-      contadorFumarTotal.textContent = cigarrosTotal;
     }
 
     function escaparHTML(texto) {
       const elemento = document.createElement('div');
-      elemento.textContent = texto || '';
+      elemento.textContent = String(texto ?? '');
       return elemento.innerHTML;
     }
 
-    cargarRegistros();
+    function iniciar() {
+      if (!SUPABASE_URL || !SUPABASE_KEY) {
+        botonFumar.disabled = true;
+        listaRegistros.innerHTML =
+          '<p class="vacio">Falta configurar la conexión con Supabase.</p>';
 
-    setInterval(cargarRegistros, 15000);
+        mostrarEstado(
+          'Completa SUPABASE_URL y SUPABASE_KEY en el archivo.',
+          true
+        );
+        return;
+      }
+
+      if (!window.supabase) {
+        botonFumar.disabled = true;
+        mostrarEstado(
+          'No se pudo cargar Supabase. Revisa la conexión y recarga.',
+          true
+        );
+        return;
+      }
+
+      try {
+        db = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+      } catch (error) {
+        botonFumar.disabled = true;
+        mostrarEstado(
+          'Revisa la configuración de Supabase: ' + error.message,
+          true
+        );
+        return;
+      }
+
+      cargarRegistros();
+
+      setInterval(() => {
+        if (!guardando) cargarRegistros();
+      }, 15000);
+    }
+
+    iniciar();
   </script>
 </body>
 </html>
